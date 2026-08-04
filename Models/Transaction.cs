@@ -12,7 +12,7 @@ namespace MyExpenseTracker.Models
 
         // ارتباط با دسته‌بندی
         public int CategoryId { get; set; }
-        public MyExpenseTracker.Models.Category? Category { get; set; }
+        public Category? Category { get; set; }
         public bool IsAiGenerated { get; set; } = false;
     }
 }
