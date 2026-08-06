@@ -2,9 +2,6 @@
 using System.Linq.Expressions;
 using MyExpenseTracker.Models;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.IO;
 
 
 namespace MyExpenseTracker
@@ -19,19 +16,8 @@ namespace MyExpenseTracker
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 
-            string FilePath = "expenses.json";
+            List<Transaction> Expenses = FileManager.LoadExpenses();
 
-            List<Transaction> Expenses = new List<Transaction>();
-
-
-            if (File.Exists(FilePath))
-            {
-
-                string jsonString = File.ReadAllText(FilePath);
-                Expenses = JsonSerializer.Deserialize<List<Transaction>> (jsonString) ?? new List<Transaction>();
-
-            }
-            
 
 
             bool KeepAding = true;
@@ -60,10 +46,11 @@ namespace MyExpenseTracker
                 Console.WriteLine("=== MAIN MENU ===");
                 Console.WriteLine("1. Add New Expense");
                 Console.WriteLine("2. View Expense List");
-                Console.WriteLine("3. Exit");
+                Console.WriteLine("3. Delete expenses");
+                Console.WriteLine("4. Exit");
 
 
-                Console.Write("\nSelect an option (1-3): ");
+                Console.Write("\nSelect an option (1-4): ");
                 string UssrOption = Console.ReadLine();
 
 
@@ -132,8 +119,9 @@ namespace MyExpenseTracker
 
                             Expenses.Add(NewExpense);
 
-                            string jsonOutPut = JsonSerializer.Serialize(Expenses, new JsonSerializerOptions { WriteIndented = true });
-                            File.WriteAllText(FilePath, jsonOutPut);
+
+                            FileManager.SaveExpenses(Expenses);
+
 
                             Console.Write("\nDo you want to add another expense? (y/n): ");
                             string Response = Console.ReadLine();
@@ -144,15 +132,15 @@ namespace MyExpenseTracker
                                 KeepAding = false;
 
                             }
+
                             Console.Clear();
+
                         }
 
                         break;
 
                     case "2":
 
-
-                        //          نمایش خلاصه خرج ها و جمع تراکنش ها
                         Console.WriteLine("\n=================================");
                         Console.WriteLine("        YOUR EXPENSE LIST        ");
                         Console.WriteLine("=================================");
@@ -177,8 +165,58 @@ namespace MyExpenseTracker
                         Console.WriteLine("\nPress any key to return to menu...");
                         Console.ReadKey();
                         break;
-
                     case "3":
+
+                        Console.Clear();
+                        Console.WriteLine("\n--- Delete Expenses ---");
+
+
+                        foreach (var expense in Expenses)
+                        {
+
+                            string CatName = expense.Category != null ? expense.Category.Name : "Uncategorized";
+
+                            Console.WriteLine($"{expense.Id}. {expense.Title} [{CatName}] -> {expense.Amount:N0} {expense.Currency}");
+
+                        }
+
+
+                        Console.Write("\n\"Enter the ID of the expense you want to delete: \"");
+                        string deleteIdInput = Console.ReadLine();
+                        int deleteId;
+
+                        while(!int.TryParse(deleteIdInput, out deleteId))
+                        {
+
+                            Console.WriteLine("Invalid input! Please enter a valid ID number: ");
+                            deleteIdInput = Console.ReadLine();
+
+                        }
+
+                        Transaction expenseToDelete = Expenses.FirstOrDefault(e => e.Id == deleteId);
+
+
+                        if(expenseToDelete != null)
+                        {
+
+                            Expenses.Remove(expenseToDelete);
+
+                            FileManager.SaveExpenses(Expenses);
+
+                            Console.WriteLine($"\nExpense '{expenseToDelete.Category}.{expenseToDelete.Title}==>{expenseToDelete.Amount}' deleted successfully!");
+
+                        }
+                        else
+                        {
+
+                            Console.WriteLine("\nExpense with this ID was not found!");
+
+                        }
+
+                        Console.WriteLine("\nPress any key to return to menu...");
+                        Console.ReadKey();
+                        break;
+                    case "4":
                         ShowMenu = false;
                         Console.WriteLine("Goodbye!");
                         break;
