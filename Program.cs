@@ -46,11 +46,11 @@ namespace MyExpenseTracker
                 Console.WriteLine("=== MAIN MENU ===");
                 Console.WriteLine("1. Add New Expense");
                 Console.WriteLine("2. View Expense List");
-                Console.WriteLine("3. Delete expenses");
-                Console.WriteLine("4. Exit");
+                Console.WriteLine("3. Edit Expense");
+                Console.WriteLine("4. Delete expenses");
+                Console.WriteLine("5. Exit");
 
-
-                Console.Write("\nSelect an option (1-4): ");
+                Console.Write("\nSelect an option (1-5): ");
                 string UssrOption = Console.ReadLine();
 
 
@@ -59,13 +59,26 @@ namespace MyExpenseTracker
 
                     case "1":
 
+                        Console.Clear();
+
+                        KeepAding = true;
+
                         while (KeepAding)
                         {
 
                             Console.WriteLine("\n--- Add New Expense ---");
 
-                            Console.Write("Enter expense title: ");
+                            Console.Write("Enter expense title(or enter 0 to cancel): ");
                             string UserTitleInput = Console.ReadLine();
+
+                            if (UserTitleInput == "0")
+                            {
+                                Console.WriteLine("\nAdding cancelled.");
+                                Console.WriteLine("\nPress any key to return to menu...");
+                                Console.ReadKey();
+                                KeepAding = false;
+                                break;
+                            }
 
                             while (string.IsNullOrWhiteSpace(UserTitleInput) || !UserTitleInput.Any(char.IsLetter))
                             {
@@ -73,6 +86,22 @@ namespace MyExpenseTracker
                                 Console.Write("Invalid input! Title must contain letters: ");
                                 UserTitleInput = Console.ReadLine();
 
+                                if (UserTitleInput == "0")
+                                {
+
+                                    break;
+
+                                }
+
+                            }
+
+                            if (UserTitleInput == "0")
+                            {
+                                Console.WriteLine("\nAdding cancelled.");
+                                Console.WriteLine("\nPress any key to return to menu...");
+                                Console.ReadKey();
+                                KeepAding = false;
+                                break;
                             }
 
                             Console.Write("Enter amount: ");
@@ -168,6 +197,145 @@ namespace MyExpenseTracker
                     case "3":
 
                         Console.Clear();
+                        Console.WriteLine("\n--- Edit Expense ---");
+
+                        if (Expenses.Count == 0)
+                        {
+
+                            Console.WriteLine("No expenses found to edit!");
+                            Console.WriteLine("\nPress any key to return to menu...");
+                            Console.ReadKey();
+                            break;
+
+                        }
+
+                        foreach (var expense in Expenses)
+                        {
+
+                            string CatName = expense.Category != null ? expense.Category.Name : "Uncategorized";
+                            Console.WriteLine($"{expense.Id}. {expense.Title} [{CatName}] -> {expense.Amount:N0} {expense.Currency}");
+
+                        }
+
+                        Transaction expenseToEdit = null;
+
+                        while (expenseToEdit == null)
+                        {
+
+                            Console.Write("\nEnter the ID of the expense you want to edit (or 0 to cancel): ");
+                            string editIdInput = Console.ReadLine();
+                            int editId;
+
+                            while (!int.TryParse(editIdInput, out editId))
+                            {
+
+                                Console.Write("Invalid input! Please enter a valid ID number: ");
+                                editIdInput = Console.ReadLine();
+
+                            }
+
+                            if (editId == 0)
+                            {
+
+                                break;
+
+                            }
+
+                            expenseToEdit = Expenses.FirstOrDefault(e => e.Id == editId);
+
+                            if (expenseToEdit == null)
+                            {
+
+                                Console.WriteLine("Expense with this ID was not found! Try again.");
+
+                            }
+
+                        }
+
+                        if (expenseToEdit == null)
+                        {
+
+                            Console.WriteLine("\nEditing cancelled.");
+                            Console.WriteLine("\nPress any key to return to menu...");
+                            Console.ReadKey();
+                            break;
+
+                        }
+
+                        Console.WriteLine($"\nCurrent Title: {expenseToEdit.Title}");
+                        Console.Write("Enter new title (or press Enter to keep current): ");
+                        string newTitleInput = Console.ReadLine();
+
+                        if (!string.IsNullOrWhiteSpace(newTitleInput) && newTitleInput.Any(char.IsLetter))
+                        {
+
+                            expenseToEdit.Title = newTitleInput;
+
+                        }
+
+                        Console.WriteLine($"\nCurrent Amount: {expenseToEdit.Amount:N0} {expenseToEdit.Currency}");
+                        Console.Write("Enter new amount (or press Enter to keep current): ");
+                        string newAmountInput = Console.ReadLine();
+
+                        if (!string.IsNullOrWhiteSpace(newAmountInput))
+                        {
+
+                            decimal newAmount;
+
+                            while (!decimal.TryParse(newAmountInput, out newAmount) || newAmount == 0)
+                            {
+
+                                Console.Write("Invalid input! Please enter a valid positive number: ");
+                                newAmountInput = Console.ReadLine();
+
+                            }
+
+                            expenseToEdit.Amount = newAmount;
+
+                        }
+
+                        Console.WriteLine($"\nCurrent Category: {(expenseToEdit.Category != null ? expenseToEdit.Category.Name : "Uncategorized")}");
+                        Console.WriteLine("Select new category (or press Enter to keep current):");
+                        foreach (var Cat in Categories)
+                        {
+
+                            Console.WriteLine($"{Cat.Id} . {Cat.Name}");
+
+                        }
+
+                        Console.Write("Enter category number (1-5): ");
+                        string newCatIdInput = Console.ReadLine();
+
+                        if (!string.IsNullOrWhiteSpace(newCatIdInput))
+                        {
+
+                            int newSelectedCatId;
+
+                            while (!int.TryParse(newCatIdInput, out newSelectedCatId) || newSelectedCatId < 1 || newSelectedCatId > 5)
+                            {
+
+                                Console.Write("Invalid category! Pick a number between 1 and 5: ");
+                                newCatIdInput = Console.ReadLine();
+
+                            }
+
+                            Category newSelectedCategory = Categories.First(c => c.Id == newSelectedCatId);
+                            expenseToEdit.CategoryId = newSelectedCategory.Id;
+                            expenseToEdit.Category = newSelectedCategory;
+
+                        }
+
+                        FileManager.SaveExpenses(Expenses);
+
+                        Console.WriteLine("\nExpense updated successfully!");
+                        Console.WriteLine("\nPress any key to return to menu...");
+
+                        Console.ReadKey();
+
+                        break;
+                    case "4":
+
+                        Console.Clear();
                         Console.WriteLine("\n--- Delete Expenses ---");
 
 
@@ -181,11 +349,19 @@ namespace MyExpenseTracker
                         }
 
 
-                        Console.Write("\n\"Enter the ID of the expense you want to delete: \"");
+                        Console.Write("\n\"Enter the ID of the expense you want to delete(or enter 0 to cancel): \"");
                         string deleteIdInput = Console.ReadLine();
                         int deleteId;
 
-                        while(!int.TryParse(deleteIdInput, out deleteId))
+                        if (deleteIdInput == "0")
+                        {
+                            Console.WriteLine("\nDeletion cancelled.");
+                            Console.WriteLine("\nPress any key to return to menu...");
+                            Console.ReadKey();
+                            break;
+                        }
+
+                        while (!int.TryParse(deleteIdInput, out deleteId))
                         {
 
                             Console.WriteLine("Invalid input! Please enter a valid ID number: ");
@@ -196,10 +372,15 @@ namespace MyExpenseTracker
                         Transaction expenseToDelete = Expenses.FirstOrDefault(e => e.Id == deleteId);
 
 
-                        if(expenseToDelete != null)
+                        if (expenseToDelete != null)
                         {
 
                             Expenses.Remove(expenseToDelete);
+
+                            for (int i = 0; i < Expenses.Count; i++)
+                            {
+                                Expenses[i].Id = i + 1;
+                            }
 
                             FileManager.SaveExpenses(Expenses);
 
@@ -216,7 +397,7 @@ namespace MyExpenseTracker
                         Console.WriteLine("\nPress any key to return to menu...");
                         Console.ReadKey();
                         break;
-                    case "4":
+                    case "5":
                         ShowMenu = false;
                         Console.WriteLine("Goodbye!");
                         break;
@@ -231,10 +412,6 @@ namespace MyExpenseTracker
                 }
 
             }
-
-
-
-
 
         }
 
